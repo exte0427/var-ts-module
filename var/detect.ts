@@ -67,7 +67,7 @@ export namespace Detect {
 
         return value;
     }
-    export const child = (obj: Type.Object, key: number) => {
+    export const child = (obj: Type.Object, key: number, setChild = false) => {
         Object.defineProperty(obj, `__var_values__`, {
             value: {},
             writable: true
@@ -76,10 +76,10 @@ export namespace Detect {
         for (const name in obj) {
             if (name !== `states` && name !== `_children_`) {
                 if (isObject(obj[name])) {
-                    if (name === `_components_`) {
+                    if (name === `_components_` || setChild === true) {
                         obj[`__var_values__`][name] = obj[name];
 
-                        child(obj[`__var_values__`][name], key);
+                        child(obj[`__var_values__`][name], key, true);
                         continue;
                     }
                     else
