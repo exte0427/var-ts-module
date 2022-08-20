@@ -1,7 +1,21 @@
 import { App } from "./app";
 import { Type } from "./types";
+import { Properties } from 'csstype';
+import { unwatchFile } from "fs";
 
 export namespace Handdle {
+
+    const get_cssChange = (lastStyle: Properties, nowStyle: Properties, dom: HTMLElement) => {
+        //add & change
+        for (const name in nowStyle) {
+            const value = nowStyle[name];
+
+            // new & change
+            if (lastStyle[name] === undefined || lastStyle[name] !== value)
+                dom.style[name] = value;
+        }
+    }
+
     const make = (data: App.VarClass, key: number): HTMLElement | Text => {
         if (data.value.tag === `text`) {
             //const myDom = document.createElement(`var-text`);
@@ -20,7 +34,10 @@ export namespace Handdle {
                 if (typeof data === `string`)
                     myDom.setAttribute(name, data);
 
-                if (name.length > 2 && name.split(``).splice(0, 2).join(``) === `on`)
+                else if (name === `style`)
+                    get_cssChange(myDom.style as Properties, data as Properties, myDom);
+
+                else if (name.length > 2 && name.split(``).splice(0, 2).join(``) === `on`)
                     myDom.addEventListener(name.split(``).splice(2).join(``), App.vars[key].value.myClass.states[name]);
 
             }
@@ -62,6 +79,9 @@ export namespace Handdle {
                 if ((lastStates[name] === undefined || lastStates[name] !== value) && name !== `value`)
                     (el as HTMLElement).setAttribute(name, value);
             }
+
+            if (name === `style`)
+                get_cssChange(lastStates[name], nowStates[name], el as HTMLElement);
 
             // text change
             if (name === `value` && lastStates[name] !== value)
