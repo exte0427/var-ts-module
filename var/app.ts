@@ -2,6 +2,7 @@ import { Virtual } from "./virtual";
 import { Change, Detect } from "./detect";
 import { Handdle, Compare } from "./htmlHandle";
 import { New } from "./new";
+import { Type } from "./types";
 
 export namespace App {
 
@@ -78,6 +79,9 @@ export namespace App {
 
                 const lastKeys = [...target.keys];
                 target.keys = kids.map(e => {
+                    if (e.myClass.states.key === undefined)
+                        throw new Error(`don't put changeable doms and static doms in same parent`);
+
                     const key: number = e.myClass.states.key;
                     const last = lastKeys.find(e => e.key === key);
                     if (last === undefined)
@@ -95,8 +99,12 @@ export namespace App {
                     const newKeys: Array<Location> = [];
                     kids.map(e => {
                         newKeys.push(new Location(-1, editVar(e)));
+
+                        if (e.myClass.states.key !== undefined)
+                            throw new Error(`don't put changeable doms and static doms in same parent`);
                     });
 
+                    // key apply
                     target.keys = newKeys;
                 }
                 // or
@@ -105,7 +113,14 @@ export namespace App {
                     kids.map((e, i) => {
                         vars[target.keys[i].loc].value.myClass.states = e.myClass.states;
                         vars[target.keys[i].loc].value.myClass._children_ = e.myClass._children_;
+
+                        if (e.myClass.states.key !== undefined)
+                            throw new Error(`don't put changeable doms and static doms in same parent`);
                     });
+
+                    // check error
+                    if (target.keys.length !== kids.length)
+                        throw new Error(`changeable doms need key state`);
                 }
             }
 
@@ -117,9 +132,9 @@ export namespace App {
     }
 
     export let mainDom: HTMLElement;
-    export const set = (startDom: Virtual.Dom) => {
+    export const set = (startDom: Type.Class, states: Type.Object) => {
         // first setting
-        const body = new VarClass(new Virtual.Dom(`body`, {}, New.staticRenderer([startDom])));
+        const body = new VarClass(new Virtual.Dom(`body`, {}, New.staticRenderer([New.el(startDom, states)])));
         body.realDom = document.querySelector(`body`);
         vars = [body];
         renewVar = [];

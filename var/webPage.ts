@@ -3,29 +3,54 @@ import { Type } from './types';
 import { Virtual } from './virtual'
 export namespace WebPage {
 
-    type PathSetting = { [x: string]: Virtual.Dom };
+    type PathSetting = { [x: string]: Type.Class };
     let setting: PathSetting = {};
 
     export const start = (setting_: PathSetting) => {
         setting = setting_;
 
         window.onload = () => {
+            console.clear();
+            console.log("VAR.TS");
+
             const states: Type.Object = {};
             const params = new URLSearchParams(window.location.search);
+            const search = window.location.search;
+            const hash = window.location.hash;
 
             params.forEach((value, key) => {
                 states[key] = value;
             });
 
-            set(window.location.pathname, states);
+            set(window.location.pathname, states, search, hash);
         }
     }
 
-    export const set = (path: string, states: Type.Object) => {
-        window.history.pushState({}, ``, path);
+    export const change = (path: string, states: Type.Object = {}, hash: string = "") => {
+        const strArr: Array<string> = [];
+        for (const name in states) {
+            strArr.push(`${name}=${states[name]}`);
 
-        const myDom = setting[path];
-        myDom.myClass.states = states;
-        App.set(setting[path]);
+            if (typeof states[name] !== 'string')
+                throw new Error(`states in link must be string!`);
+        }
+
+        let str = ``;
+        if (strArr.length !== 0)
+            str = `?${strArr.join(`&`)}`;
+
+        return () => { location.href = `${path}${str}${hash}`; };
+    }
+
+    const set = (path: string, states: Type.Object, search: string, hash: string) => {
+        //window.history.pushState({}, ``, `${path}${search}${hash}`);
+
+        if (setting[path] === undefined)
+            throw new Error(`page ${path} is not existing`);
+        else {
+            const myDom = setting[path];
+            const myStates = { ...states, hash: hash.substring(1) };
+            App.set(setting[path], myStates);
+        }
     }
 }

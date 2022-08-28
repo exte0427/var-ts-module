@@ -7,7 +7,7 @@ import * as css from 'csstype';
 export namespace Var {
     export namespace Path {
         export const start = WebPage.start;
-        export const set = WebPage.set;
+        export const change = WebPage.change;
     }
 
     export const Dom = MainClass.Dom;

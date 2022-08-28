@@ -214,6 +214,10 @@ export namespace Compare {
     export const render = (startPoint: number) => {
         // dynamic
         if (App.vars[startPoint].keys.length === 0 || App.vars[startPoint].keys[0].key !== -1) {
+            // text
+            if (App.vars[startPoint].value.tag === `text`)
+                return;
+
             // not first time
             if (lastData[startPoint] !== undefined) {
                 const ntChange = Change.lastElements(lastData[startPoint].keys, nowData[startPoint].keys);
@@ -230,7 +234,7 @@ export namespace Compare {
 
                 // del
                 for (const e of del)
-                    Handdle.del(App.vars[e.loc].realDom);
+                    Handdle.del(lastData[e.loc].realDom);
 
                 // add
                 for (const e of add) {
@@ -242,18 +246,20 @@ export namespace Compare {
             else {
                 nowData[startPoint].keys.map(e => {
                     Handdle.add(App.vars[startPoint].realDom as HTMLElement, App.vars[e.loc], e.loc);
+                    delChildKey(lastData, e.loc);
                 })
             }
         }
 
         // static
         else {
-            for (const e of App.vars[startPoint].keys) {
+            for (const e of nowData[startPoint].keys) {
                 const lastS = lastData[e.loc];
                 const nowS = App.vars[e.loc];
 
-                if (lastS === undefined)
+                if (lastS === undefined) {
                     Handdle.add(App.vars[startPoint].realDom as HTMLElement, App.vars[e.loc], e.loc);
+                }
                 else if (nowS === undefined)
                     Handdle.del(lastS.realDom);
                 else if (lastS.value.tag !== nowS.value.tag) {

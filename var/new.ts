@@ -4,7 +4,14 @@ import { MainClass } from "./mainClass";
 
 export namespace New {
     export const el = (tag: string | Type.Class, state: Type.Object, ...children: Array<Virtual.Dom | string | Array<Virtual.Dom | string>>) => {
-        const myChild: Array<Virtual.Dom | string> = (Array.isArray(children[0]) ? children[0] : children) as Array<Virtual.Dom | string>;
+        let myChild: Array<Virtual.Dom | string> = [];
+
+        children.map(e => {
+            if (Array.isArray(e))
+                myChild = [...myChild, ...e];
+            else if (e !== undefined)
+                myChild = [...myChild, e];
+        });
 
         if (state === null)
             state = {};
