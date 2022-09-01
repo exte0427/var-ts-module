@@ -38,7 +38,7 @@ export namespace Handdle {
                     get_cssChange(myDom.style as Properties, data as Properties, myDom);
 
                 else if (name.length > 2 && name.split(``).splice(0, 2).join(``) === `on`)
-                    myDom.addEventListener(name.split(``).splice(2).join(``), App.vars[key].value.myClass.states[name]);
+                    myDom[name] = App.vars[key].value.myClass.states[name];
 
             }
 
@@ -82,6 +82,9 @@ export namespace Handdle {
 
             if (name === `style`)
                 get_cssChange(lastStates[name], nowStates[name], el as HTMLElement);
+
+            if (name.length > 2 && name.split(``).splice(0, 2).join(``) === `on` && App.isFirst)
+                el[name] = nowStates[name];
 
             // text change
             if (name === `value` && lastStates[name] !== value)
@@ -218,6 +221,14 @@ export namespace Compare {
             if (App.vars[startPoint].value.tag === `text`)
                 return;
 
+            // changed spa
+            if (App.isFirst) {
+                App.vars[startPoint].keys.map(e => {
+                    if (lastData[e.loc] !== undefined)
+                        App.vars[e.loc].realDom = lastData[e.loc].realDom;
+                });
+            }
+
             // not first time
             if (lastData[startPoint] !== undefined) {
                 const ntChange = Change.lastElements(lastData[startPoint].keys, nowData[startPoint].keys);
@@ -257,17 +268,21 @@ export namespace Compare {
                 const lastS = lastData[e.loc];
                 const nowS = App.vars[e.loc];
 
-                if (lastS === undefined) {
-                    Handdle.add(App.vars[startPoint].realDom as HTMLElement, App.vars[e.loc], e.loc);
-                }
+                if (nowS === undefined && lastS === undefined)
+                    throw new Error(`Error!`);
+                if (lastS === undefined)
+                    Handdle.add(App.vars[startPoint].realDom as HTMLElement, nowS, e.loc);
                 else if (nowS === undefined)
                     Handdle.del(lastS.realDom);
                 else if (lastS.value.tag !== nowS.value.tag) {
                     Handdle.change(App.vars[startPoint].realDom as HTMLElement, lastS.realDom as HTMLElement, nowS, e.loc);
                     delChildKey(lastData, e.loc);
                 }
-                else
+                else {
+                    if (App.isFirst)
+                        nowS.realDom = lastS.realDom;
                     Handdle.changeState(App.vars[e.loc].realDom as HTMLElement, lastS.value.myClass.states, nowS.value.myClass.states);
+                }
             }
         }
 

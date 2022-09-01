@@ -20,6 +20,11 @@ export namespace New {
         else
             return new Virtual.Dom(tag.name, state, new tag());
     }
+
+    export const app = (tag: Type.Class, state: Type.Object) => {
+        return new Virtual.Dom(`App`, state, new tag());
+    }
+
     export const tx = (data: string) => {
         return new Virtual.Dom(`text`, { "value": data }, staticRenderer([]));
     }

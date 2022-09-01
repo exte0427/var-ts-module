@@ -1,6 +1,7 @@
 import { Compare } from "./htmlHandle";
 import { App } from "./app";
 import { Type } from "./types";
+import { WebPage } from "./webPage";
 
 export namespace Change {
 
@@ -45,23 +46,28 @@ export namespace Detect {
             }
         }
 
+        const nowNum = WebPage.changNum;
         const value = new Proxy(obj, {
             get(target, key) {
                 return target[key as string];
             },
             set(target, myKey, value) {
-                if (myKey !== `states` && myKey !== `_children_` && myKey !== `_components_`) {
-                    if (isObject(value))
-                        target[myKey as string] = proxy(value, key);
-                    else
-                        target[myKey as string] = value;
+                if (WebPage.changNum === nowNum) {
+                    if (myKey !== `states` && myKey !== `_children_` && myKey !== `_components_`) {
+                        if (isObject(value))
+                            target[myKey as string] = proxy(value, key);
+                        else
+                            target[myKey as string] = value;
 
-                    Change.changer(key);
+                        Change.changer(key);
+                    }
+                    else
+                        target[key] = value;
+
+                    return true;
                 }
                 else
-                    target[key] = value;
-
-                return true;
+                    throw new Error(`page was reloaded, but you're using not-used variable`);
             }
         });
 
@@ -73,6 +79,7 @@ export namespace Detect {
             writable: true
         });
 
+        const nowNum = WebPage.changNum;
         for (const name in obj) {
             if (name !== `states` && name !== `_children_`) {
                 if (isObject(obj[name])) {
@@ -93,12 +100,16 @@ export namespace Detect {
                         return obj[`__var_values__`][name];
                     },
                     set(newValue) {
-                        if (isObject(newValue))
-                            obj[`__var_values__`][name] = proxy(newValue, key);
-                        else
-                            obj[`__var_values__`][name] = newValue;
+                        if (WebPage.changNum === nowNum) {
+                            if (isObject(newValue))
+                                obj[`__var_values__`][name] = proxy(newValue, key);
+                            else
+                                obj[`__var_values__`][name] = newValue;
 
-                        Change.changer(key);
+                            Change.changer(key);
+                        }
+                        else
+                            throw new Error(`page was reloaded, but you're using not-used variable`);
                     }
                 });
             }

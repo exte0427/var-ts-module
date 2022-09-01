@@ -3,6 +3,7 @@ import { Type } from './types';
 import { Virtual } from './virtual'
 export namespace WebPage {
 
+    export let changNum = 0;
     type PathSetting = { [x: string]: Type.Class };
     let setting: PathSetting = {};
 
@@ -39,18 +40,23 @@ export namespace WebPage {
         if (strArr.length !== 0)
             str = `?${strArr.join(`&`)}`;
 
-        return () => { location.href = `${path}${str}${hash}`; };
+        return () => { set(path, states, str, hash); };
     }
 
     const set = (path: string, states: Type.Object, search: string, hash: string) => {
-        //window.history.pushState({}, ``, `${path}${search}${hash}`);
+
+        window.history.pushState({}, ``, `${path}${search}${hash}`);
+        changNum++;
 
         if (setting[path] === undefined)
             throw new Error(`page ${path} is not existing`);
         else {
             const myDom = setting[path];
             const myStates = { ...states, hash: hash.substring(1) };
-            App.set(setting[path], myStates);
+
+            App.isFirst = true;
+            App.set(myDom, myStates);
+            App.isFirst = false;
         }
     }
 }
