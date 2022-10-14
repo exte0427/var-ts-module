@@ -4,7 +4,7 @@ import { Type } from "./types";
 export namespace Virtual {
     export class Dom {
         tag: string;
-        myClass: MainClass.Dom = null;
+        myClass: MainClass.Dom;
 
         constructor(tag_: string, states_: Type.Object, myClass_: MainClass.Dom) {
             this.tag = tag_;

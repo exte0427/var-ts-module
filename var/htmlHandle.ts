@@ -110,11 +110,8 @@ export namespace Handdle {
 
 namespace Change {
     export const lastElements = (last: Array<App.Location>, now: Array<App.Location>) => {
-        const calcMax = (a: Array<App.Location>, b: Array<App.Location>) => a.length > b.length ? a : b;
-        const table: Array<Array<Array<App.Location>>> = Array.from(Array(last.length), () => new Array(now.length));
-
-        const doTableX: Array<boolean> = [];
-        const doTableY: Array<boolean> = [];
+        const calcMax = (a: number, b: number) => a > b ? a : b;
+        const table: Array<Array<number>> = Array.from(Array(last.length), () => new Array(now.length));
 
         if (last.length === 0)
             return last;
@@ -123,77 +120,73 @@ namespace Change {
 
         now.map((valy, y) => {
             last.map((valx, x) => {
-                let nowVal: Array<App.Location> = [];
+                let nowVal = 0;
                 if (x > 0 || y > 0) {
                     if (x > 0 && y > 0)
-                        nowVal = [...calcMax(table[x - 1][y], table[x][y - 1])];
+                        nowVal = calcMax(table[x - 1][y], table[x][y - 1]);
                     else if (x > 0)
-                        nowVal = [...table[x - 1][y]];
+                        nowVal = table[x - 1][y];
                     else
-                        nowVal = [...table[x][y - 1]];
-                }
-                if (valx.key === valy.key && doTableY[y] === undefined && doTableX[x] === undefined) {
-                    nowVal = [...nowVal, new App.Location(valy.key, valy.loc)];
-                    doTableX[x] = true;
-                    doTableY[y] = true;
+                        nowVal = table[x][y - 1];
+
+                    if(last[x] === now[y])
+                        nowVal++;
                 }
 
                 table[x][y] = nowVal;
             });
         });
 
-        return table[last.length - 1][now.length - 1];
+        const lasts:Array<App.Location> = [];
+        let max = table[last.length - 1][now.length - 1];
+        let y = last.length - 1;
+        let x = now.length - 1;
+        while(max){
+            if(table[x-1][y] === table[x][y-1]){
+                x-=1;
+                y-=1;
+                max--;
+
+                lasts.push(now[y]);
+            }
+
+            else if(table[x-1][y] === table[x][y])
+                x-=1;
+            else if(table[x][y-1] === table[x][y])
+                y-=1;
+        }
+
+        return lasts;
     }
-
-    export const getDel = (data: Array<App.Location>, compareData: Array<App.Location>) => {
-        const returnData: Array<App.Location> = [];
-
-        data.map(e => {
-            if (compareData.find(e1 => e1.key === e.key) === undefined)
-                returnData.push(e);
-        });
-
-        return returnData;
-    }
-
-    class AddSet {
+    
+    export class AddSet {
         data: App.Location;
         lastDom: HTMLElement | Text | undefined;
 
-        constructor(data_: App.Location, lastDom_: HTMLElement | Text) {
+        constructor(data_: App.Location, lastDom_: HTMLElement | Text|undefined) {
             this.data = data_;
             this.lastDom = lastDom_;
         }
     }
 
-    export const getAdd = (nowData: Array<App.Location>, ntChange: Array<App.Location>) => {
-        let pushList: Array<App.Location> = [];
-        const returnArr: Array<AddSet> = [];
+    export const findDiff = (nowData: Array<App.Location>, ntChange: Array<App.Location>) => {
+        let nowIndex = 0;
+        const returnData:Array<AddSet> = [];
 
-        for (const i in nowData) {
-            let found = false;
-            for (const j in ntChange) {
-                if (ntChange[j].key === nowData[i].key) {
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found)
-                pushList.push(nowData[i]);
-            else {
-                pushList.map(e => {
-                    returnArr.push(new AddSet(e, App.vars[nowData[i].loc].realDom));
-                });
-                pushList = [];
-            }
+        if(ntChange.length === 0){
+            return nowData.map(e=>(
+                new AddSet(e,undefined)
+            ))
         }
 
-        pushList.map(e => {
-            returnArr.push(new AddSet(e, undefined));
+        nowData.map((element)=>{
+            if(element.key === ntChange[nowIndex].key){
+                returnData.push(new AddSet(element,App.vars[ntChange[nowIndex].loc].realDom));
+                nowIndex++;
+            }
         });
 
-        return returnArr;
+        return returnData;
     }
 }
 
@@ -211,7 +204,7 @@ export namespace Compare {
                 if (lastData[e.loc] !== undefined)
                     delChildKey(lastData, e.loc);
             });
-        lastData[startPoint] = undefined;
+        lastData[startPoint] = undefined as unknown as App.VarClass;
     }
 
     export const render = (startPoint: number) => {
@@ -232,8 +225,8 @@ export namespace Compare {
             // not first time
             if (lastData[startPoint] !== undefined) {
                 const ntChange = Change.lastElements(lastData[startPoint].keys, nowData[startPoint].keys);
-                const add = Change.getAdd(nowData[startPoint].keys, ntChange);
-                const del = Change.getDel(lastData[startPoint].keys, ntChange);
+                const add = Change.findDiff(nowData[startPoint].keys, ntChange);
+                const del = Change.findDiff(lastData[startPoint].keys, ntChange);
 
                 // change states
                 for (const e of ntChange) {
@@ -245,7 +238,7 @@ export namespace Compare {
 
                 // del
                 for (const e of del)
-                    Handdle.del(lastData[e.loc].realDom);
+                    Handdle.del(lastData[e.data.loc].realDom);
 
                 // add
                 for (const e of add) {

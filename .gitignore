@@ -6,3 +6,7 @@
 /test
 /tsconfig.json
 /webpack.config.js
+/build
+/.eslintrc.js
+/.prettierrc
+/.vscode

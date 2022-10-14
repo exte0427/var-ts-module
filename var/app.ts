@@ -18,8 +18,8 @@ export namespace App {
 
     export class VarClass {
         keys: Array<Location> = [];
-        value: Virtual.Dom = null;
-        realDom: HTMLElement | Text = null;
+        value: Virtual.Dom;
+        realDom: HTMLElement | Text = undefined as unknown as HTMLElement;
 
         constructor(value_: Virtual.Dom) {
             this.value = value_;
@@ -30,13 +30,13 @@ export namespace App {
     let renewVar: Array<number> = [];
 
     export let isFirst = false;
-    export let delTimes = [];
-    export let delInters = [];
+    export let delTimes:Array<number> = [];
+    export let delInters:Array<number> = [];
 
     const editVar = (dom: Virtual.Dom) => {
         let loc = vars.length;
         if (renewVar.length !== 0)
-            loc = renewVar.pop();
+            loc = renewVar.pop() as number;
 
         // set
         vars[loc] = new VarClass(dom);
@@ -56,15 +56,10 @@ export namespace App {
         return loc;
     }
 
-    const delVar = (index: number) => {
-        renewVar.push(index);
-        vars[index] = undefined;
-    }
-
     export const render = (startPoint: number) => {
         const target = vars[startPoint];
         let newKids: Array<Virtual.Dom | string> = [];
-        if (target.value.myClass.onRender === undefined)
+        if (target.value.myClass.onRender() === "null")
             newKids = target.value.myClass._children_;
         else
             newKids = [target.value.myClass.onRender()];
@@ -149,7 +144,7 @@ export namespace App {
 
         // first setting
         const body = new VarClass(new Virtual.Dom(`body`, {}, New.staticRenderer([New.app(startDom, states)])));
-        body.realDom = document.querySelector(`body`);
+        body.realDom = document.querySelector(`body`) as HTMLElement;
         vars = [body];
         renewVar = [];
 

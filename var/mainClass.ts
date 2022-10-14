@@ -5,12 +5,12 @@ import { App } from "./app";
 
 export namespace MainClass {
     export class Dom {
-        tag: string;
+        tag: string = "";
         states: Type.Object = {};
 
-        onChange: () => void;
-        onRender: () => Virtual.Dom | string;
-        onStart: () => void;
+        onChange: () => void = ()=>{};
+        onRender: () => Virtual.Dom | string = ()=>"null";
+        onStart: () => void = ()=>{};
 
         // internal functions & variables
         // user use
@@ -35,7 +35,7 @@ export namespace MainClass {
     }
 
     export class Component {
-        onStart: () => void;
+        onStart: () => void = ()=>{};
 
         setTimeOut = (callback: () => void, ms = 1, ...arg) => {
             App.delTimes.push(setTimeout(callback, ms, arg));
