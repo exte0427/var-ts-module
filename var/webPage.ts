@@ -27,22 +27,6 @@ export namespace WebPage {
         }
     }
 
-    export const change = (path: string, states: Type.Object = {}, hash: string = "") => {
-        const strArr: Array<string> = [];
-        for (const name in states) {
-            strArr.push(`${name}=${states[name]}`);
-
-            if (typeof states[name] !== 'string')
-                throw new Error(`states in link must be string!`);
-        }
-
-        let str = ``;
-        if (strArr.length !== 0)
-            str = `?${strArr.join(`&`)}`;
-
-        return () => { set(path, states, str, hash); };
-    }
-
     const set = (path: string, states: Type.Object, search: string, hash: string) => {
 
         window.history.pushState({}, ``, `${path}${search}${hash}`);
@@ -54,9 +38,7 @@ export namespace WebPage {
             const myDom = setting[path];
             const myStates = { ...states, hash: hash.substring(1) };
 
-            App.isFirst = true;
             App.set(myDom, myStates);
-            App.isFirst = false;
         }
     }
 }

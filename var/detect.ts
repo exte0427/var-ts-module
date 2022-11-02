@@ -20,9 +20,26 @@ export namespace Change {
 
         return copy;
     }
+
+    export const changes:Object = {};
     export const changer = (key: number) => {
+        //del last
+        if(changes[key] !== undefined)
+            window.cancelAnimationFrame(changes[key]);
+
+        //delay
+        changes[key] = window.requestAnimationFrame(()=>{
+            realChanger(key);
+            changes[key] = undefined;
+        });
+    }
+
+    export const realChanger = (key: number) => {
+        // render
         App.render(key);
         Compare.nowData = deepCopy(App.vars) as Array<App.VarClass>;
+
+        // appear
         Compare.render(key);
         Compare.lastData = deepCopy(App.vars) as Array<App.VarClass>;
     }

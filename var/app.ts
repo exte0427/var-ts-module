@@ -29,10 +29,6 @@ export namespace App {
     export let vars: Array<VarClass> = [];
     let renewVar: Array<number> = [];
 
-    export let isFirst = false;
-    export let delTimes:Array<number> = [];
-    export let delInters:Array<number> = [];
-
     const editVar = (dom: Virtual.Dom) => {
         let loc = vars.length;
         if (renewVar.length !== 0)
@@ -132,15 +128,6 @@ export namespace App {
 
     export let mainDom: HTMLElement;
     export const set = (startDom: Type.Class, states: Type.Object) => {
-
-        // clear trash
-        delTimes.map(e => {
-            clearTimeout(e);
-        });
-
-        delInters.map(e => {
-            clearInterval(e);
-        });
 
         // first setting
         const body = new VarClass(new Virtual.Dom(`body`, {}, New.staticRenderer([New.app(startDom, states)])));

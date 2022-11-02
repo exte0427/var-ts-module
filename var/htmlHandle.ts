@@ -83,9 +83,6 @@ export namespace Handdle {
             if (name === `style`)
                 get_cssChange(lastStates[name], nowStates[name], el as HTMLElement);
 
-            if (name.length > 2 && name.split(``).splice(0, 2).join(``) === `on` && App.isFirst)
-                el[name] = nowStates[name];
-
             // text change
             if (name === `value` && lastStates[name] !== value)
                 el.nodeValue = value;
@@ -214,14 +211,6 @@ export namespace Compare {
             if (App.vars[startPoint].value.tag === `text`)
                 return;
 
-            // changed spa
-            if (App.isFirst) {
-                App.vars[startPoint].keys.map(e => {
-                    if (lastData[e.loc] !== undefined)
-                        App.vars[e.loc].realDom = lastData[e.loc].realDom;
-                });
-            }
-
             // not first time
             if (lastData[startPoint] !== undefined) {
                 const ntChange = Change.lastElements(lastData[startPoint].keys, nowData[startPoint].keys);
@@ -271,11 +260,8 @@ export namespace Compare {
                     Handdle.change(App.vars[startPoint].realDom as HTMLElement, lastS.realDom as HTMLElement, nowS, e.loc);
                     delChildKey(lastData, e.loc);
                 }
-                else {
-                    if (App.isFirst)
-                        nowS.realDom = lastS.realDom;
+                else 
                     Handdle.changeState(App.vars[e.loc].realDom as HTMLElement, lastS.value.myClass.states, nowS.value.myClass.states);
-                }
             }
         }
 
