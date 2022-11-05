@@ -2,6 +2,7 @@ import { Compare } from "./htmlHandle";
 import { App } from "./app";
 import { Type } from "./types";
 import { WebPage } from "./webPage";
+import { Virtual } from "./virtual";
 
 export namespace Change {
 
@@ -34,14 +35,30 @@ export namespace Change {
         });
     }
 
+    const derive = (key:number)=>{
+        const value:Array<Virtual.DomState> = [];
+        const internalDerive = (key:number) => {
+            const tag = App.vars[key].value.tag;
+            const states = App.vars[key].value.myClass.states;
+            const children = App.vars[key].keys;
+            const realDom = App.vars[key].realDom;
+
+            value[key]=new Virtual.DomState(tag,states,children,realDom);
+            children.map(e=>internalDerive(e.loc));
+        }
+
+        internalDerive(key);
+        return value;
+    }
+
     export const realChanger = (key: number) => {
         // render
         App.render(key);
-        Compare.nowData = deepCopy(App.vars) as Array<App.VarClass>;
+        Compare.nowData = derive(key);
 
         // appear
         Compare.render(key);
-        Compare.lastData = deepCopy(App.vars) as Array<App.VarClass>;
+        Compare.lastData = derive(key);
     }
 }
 

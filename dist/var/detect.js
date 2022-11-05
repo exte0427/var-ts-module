@@ -4,6 +4,7 @@ exports.Detect = exports.Change = void 0;
 var htmlHandle_1 = require("./htmlHandle");
 var app_1 = require("./app");
 var webPage_1 = require("./webPage");
+var virtual_1 = require("./virtual");
 var Change;
 (function (Change) {
     Change.deepCopy = function (obj) {
@@ -30,13 +31,26 @@ var Change;
             Change.changes[key] = undefined;
         });
     };
+    var derive = function (key) {
+        var value = [];
+        var internalDerive = function (key) {
+            var tag = app_1.App.vars[key].value.tag;
+            var states = app_1.App.vars[key].value.myClass.states;
+            var children = app_1.App.vars[key].keys;
+            var realDom = app_1.App.vars[key].realDom;
+            value[key] = new virtual_1.Virtual.DomState(tag, states, children, realDom);
+            children.map(function (e) { return internalDerive(e.loc); });
+        };
+        internalDerive(key);
+        return value;
+    };
     Change.realChanger = function (key) {
         // render
         app_1.App.render(key);
-        htmlHandle_1.Compare.nowData = Change.deepCopy(app_1.App.vars);
+        htmlHandle_1.Compare.nowData = derive(key);
         // appear
         htmlHandle_1.Compare.render(key);
-        htmlHandle_1.Compare.lastData = Change.deepCopy(app_1.App.vars);
+        htmlHandle_1.Compare.lastData = derive(key);
     };
 })(Change = exports.Change || (exports.Change = {}));
 var Detect;

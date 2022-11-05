@@ -2,6 +2,7 @@ import { App } from "./app";
 import { Type } from "./types";
 import { Properties } from 'csstype';
 import { unwatchFile } from "fs";
+import { Virtual } from "./virtual";
 
 export namespace Handdle {
 
@@ -16,17 +17,17 @@ export namespace Handdle {
         }
     }
 
-    const make = (data: App.VarClass, key: number): HTMLElement | Text => {
-        if (data.value.tag === `text`) {
+    const make = (data: Virtual.DomState, key: number): HTMLElement | Text => {
+        if (data.tag === `text`) {
             //const myDom = document.createElement(`var-text`);
-            const myDom = document.createTextNode(data.value.myClass.states[`value`]);
+            const myDom = document.createTextNode(data.states[`value`]);
             //myDom.appendChild(element);
 
             return myDom;
         }
         else {
-            const myDom: HTMLElement = document.createElement(data.value.tag);
-            const states = data.value.myClass.states;
+            const myDom: HTMLElement = document.createElement(data.tag);
+            const states = data.states;
 
             for (const name in states) {
                 const data = states[name];
@@ -38,7 +39,7 @@ export namespace Handdle {
                     get_cssChange(myDom.style as Properties, data as Properties, myDom);
 
                 else if (name.length > 2 && name.split(``).splice(0, 2).join(``) === `on`)
-                    myDom[name] = App.vars[key].value.myClass.states[name];
+                    myDom[name] = Compare.nowData[key].states[name];
 
             }
 
@@ -46,24 +47,26 @@ export namespace Handdle {
         }
     }
 
-    export const add = (parentEl: HTMLElement | Document, data: App.VarClass, key: number) => {
-        const realDom = make(data, key);
-        data.realDom = realDom;
+    export const add = (parentEl: HTMLElement | Document, index:number, key: number) => {
+        const realDom = make(Compare.nowData[index], key);
+        Compare.nowData[index].realDom = realDom;
+        App.vars[index].realDom = realDom;
         parentEl.appendChild(realDom);
     }
 
-    export const insert = (parentEl: HTMLElement | Document, data: App.VarClass, key: number, lastDom: HTMLElement | Text | undefined) => {
+    export const insert = (parentEl: HTMLElement | Document, index:number, key: number, lastDom: HTMLElement | Text | undefined) => {
         if (lastDom === undefined)
-            add(parentEl, data, key);
+            add(parentEl, index, key);
 
         else {
-            const realDom = make(data, key);
-            data.realDom = realDom;
+            const realDom = make(Compare.nowData[index], key);
+            Compare.nowData[index].realDom = realDom;
+            App.vars[index].realDom = realDom;
             parentEl.insertBefore(realDom, lastDom);
         }
     }
 
-    export const change = (parentEl: HTMLElement, target: HTMLElement, data: App.VarClass, key: number) => {
+    export const change = (parentEl: HTMLElement, target: HTMLElement, data: Virtual.DomState, key: number) => {
         const realDom = make(data, key);
         data.realDom = realDom;
         parentEl.replaceChild(realDom, target);
@@ -178,7 +181,7 @@ namespace Change {
 
         nowData.map((element)=>{
             if(element.key === ntChange[nowIndex].key){
-                returnData.push(new AddSet(element,App.vars[ntChange[nowIndex].loc].realDom));
+                returnData.push(new AddSet(element,Compare.nowData[ntChange[nowIndex].loc].realDom));
                 nowIndex++;
             }
         });
@@ -189,26 +192,26 @@ namespace Change {
 
 export namespace Compare {
     // eslint-disable-next-line prefer-const
-    export let lastData: Array<App.VarClass> = [];
+    export let lastData: Array<Virtual.DomState> = [];
 
     // eslint-disable-next-line prefer-const
-    export let nowData: Array<App.VarClass> = [];
+    export let nowData: Array<Virtual.DomState> = [];
 
-    const delChildKey = (lastData: Array<App.VarClass>, startPoint: number) => {
+    const delChildKey = (lastData: Array<Virtual.DomState>, startPoint: number) => {
         if (lastData[startPoint] !== undefined)
             lastData[startPoint].keys.map(e => {
 
                 if (lastData[e.loc] !== undefined)
                     delChildKey(lastData, e.loc);
             });
-        lastData[startPoint] = undefined as unknown as App.VarClass;
+        lastData[startPoint] = undefined as unknown as Virtual.DomState;
     }
 
     export const render = (startPoint: number) => {
         // dynamic
-        if (App.vars[startPoint].keys.length === 0 || App.vars[startPoint].keys[0].key !== -1) {
+        if (nowData[startPoint].keys.length === 0 || nowData[startPoint].keys[0].key !== -1) {
             // text
-            if (App.vars[startPoint].value.tag === `text`)
+            if (nowData[startPoint].tag === `text`)
                 return;
 
             // not first time
@@ -219,10 +222,10 @@ export namespace Compare {
 
                 // change states
                 for (const e of ntChange) {
-                    const lastState = lastData[e.loc].value.myClass.states;
-                    const nowState = nowData[e.loc].value.myClass.states;
+                    const lastState = lastData[e.loc].states;
+                    const nowState = nowData[e.loc].states;
 
-                    Handdle.changeState(App.vars[e.loc].realDom as HTMLElement, lastState, nowState);
+                    Handdle.changeState(nowData[e.loc].realDom as HTMLElement, lastState, nowState);
                 }
 
                 // del
@@ -231,15 +234,14 @@ export namespace Compare {
 
                 // add
                 for (const e of add) {
-                    Handdle.insert(App.vars[startPoint].realDom as HTMLElement, App.vars[e.data.loc], e.data.loc, e.lastDom);
+                    Handdle.insert(nowData[startPoint].realDom as HTMLElement, e.data.loc, e.data.loc, e.lastDom);
                     delChildKey(lastData, e.data.loc);
                 }
             }
             // first time
             else {
                 nowData[startPoint].keys.map(e => {
-                    Handdle.add(App.vars[startPoint].realDom as HTMLElement, App.vars[e.loc], e.loc);
-                    delChildKey(lastData, e.loc);
+                    Handdle.add(nowData[startPoint].realDom as HTMLElement, e.loc, e.loc);
                 })
             }
         }
@@ -247,25 +249,22 @@ export namespace Compare {
         // static
         else {
             for (const e of nowData[startPoint].keys) {
-                const lastS = lastData[e.loc];
-                const nowS = App.vars[e.loc];
-
-                if (nowS === undefined && lastS === undefined)
+                if (nowData[e.loc] === undefined && lastData[e.loc] === undefined)
                     throw new Error(`Error!`);
-                if (lastS === undefined)
-                    Handdle.add(App.vars[startPoint].realDom as HTMLElement, nowS, e.loc);
-                else if (nowS === undefined)
-                    Handdle.del(lastS.realDom);
-                else if (lastS.value.tag !== nowS.value.tag) {
-                    Handdle.change(App.vars[startPoint].realDom as HTMLElement, lastS.realDom as HTMLElement, nowS, e.loc);
+                if (lastData[e.loc] === undefined)
+                    Handdle.add(nowData[startPoint].realDom as HTMLElement, e.loc, e.loc);
+                else if (nowData[e.loc] === undefined)
+                    Handdle.del(lastData[e.loc].realDom);
+                else if (lastData[e.loc].tag !== nowData[e.loc].tag) {
+                    Handdle.change(nowData[startPoint].realDom as HTMLElement, lastData[e.loc].realDom as HTMLElement, nowData[e.loc], e.loc);
                     delChildKey(lastData, e.loc);
                 }
                 else 
-                    Handdle.changeState(App.vars[e.loc].realDom as HTMLElement, lastS.value.myClass.states, nowS.value.myClass.states);
+                    Handdle.changeState(nowData[e.loc].realDom as HTMLElement, lastData[e.loc].states, nowData[e.loc].states);
             }
         }
 
         // repeat
-        App.vars[startPoint].keys.map(index => render(index.loc));
+        nowData[startPoint].keys.map(index => render(index.loc));
     }
 }

@@ -14,15 +14,15 @@ var Handdle;
         }
     };
     var make = function (data, key) {
-        if (data.value.tag === "text") {
+        if (data.tag === "text") {
             //const myDom = document.createElement(`var-text`);
-            var myDom = document.createTextNode(data.value.myClass.states["value"]);
+            var myDom = document.createTextNode(data.states["value"]);
             //myDom.appendChild(element);
             return myDom;
         }
         else {
-            var myDom = document.createElement(data.value.tag);
-            var states = data.value.myClass.states;
+            var myDom = document.createElement(data.tag);
+            var states = data.states;
             for (var name_2 in states) {
                 var data_1 = states[name_2];
                 if (typeof data_1 === "string")
@@ -30,22 +30,24 @@ var Handdle;
                 else if (name_2 === "style")
                     get_cssChange(myDom.style, data_1, myDom);
                 else if (name_2.length > 2 && name_2.split("").splice(0, 2).join("") === "on")
-                    myDom[name_2] = app_1.App.vars[key].value.myClass.states[name_2];
+                    myDom[name_2] = Compare.nowData[key].states[name_2];
             }
             return myDom;
         }
     };
-    Handdle.add = function (parentEl, data, key) {
-        var realDom = make(data, key);
-        data.realDom = realDom;
+    Handdle.add = function (parentEl, index, key) {
+        var realDom = make(Compare.nowData[index], key);
+        Compare.nowData[index].realDom = realDom;
+        app_1.App.vars[index].realDom = realDom;
         parentEl.appendChild(realDom);
     };
-    Handdle.insert = function (parentEl, data, key, lastDom) {
+    Handdle.insert = function (parentEl, index, key, lastDom) {
         if (lastDom === undefined)
-            Handdle.add(parentEl, data, key);
+            Handdle.add(parentEl, index, key);
         else {
-            var realDom = make(data, key);
-            data.realDom = realDom;
+            var realDom = make(Compare.nowData[index], key);
+            Compare.nowData[index].realDom = realDom;
+            app_1.App.vars[index].realDom = realDom;
             parentEl.insertBefore(realDom, lastDom);
         }
     };
@@ -142,7 +144,7 @@ var Change;
         }
         nowData.map(function (element) {
             if (element.key === ntChange[nowIndex].key) {
-                returnData.push(new AddSet(element, app_1.App.vars[ntChange[nowIndex].loc].realDom));
+                returnData.push(new AddSet(element, Compare.nowData[ntChange[nowIndex].loc].realDom));
                 nowIndex++;
             }
         });
@@ -165,9 +167,9 @@ var Compare;
     };
     Compare.render = function (startPoint) {
         // dynamic
-        if (app_1.App.vars[startPoint].keys.length === 0 || app_1.App.vars[startPoint].keys[0].key !== -1) {
+        if (Compare.nowData[startPoint].keys.length === 0 || Compare.nowData[startPoint].keys[0].key !== -1) {
             // text
-            if (app_1.App.vars[startPoint].value.tag === "text")
+            if (Compare.nowData[startPoint].tag === "text")
                 return;
             // not first time
             if (Compare.lastData[startPoint] !== undefined) {
@@ -177,9 +179,9 @@ var Compare;
                 // change states
                 for (var _i = 0, ntChange_1 = ntChange; _i < ntChange_1.length; _i++) {
                     var e = ntChange_1[_i];
-                    var lastState = Compare.lastData[e.loc].value.myClass.states;
-                    var nowState = Compare.nowData[e.loc].value.myClass.states;
-                    Handdle.changeState(app_1.App.vars[e.loc].realDom, lastState, nowState);
+                    var lastState = Compare.lastData[e.loc].states;
+                    var nowState = Compare.nowData[e.loc].states;
+                    Handdle.changeState(Compare.nowData[e.loc].realDom, lastState, nowState);
                 }
                 // del
                 for (var _a = 0, del_1 = del; _a < del_1.length; _a++) {
@@ -189,15 +191,14 @@ var Compare;
                 // add
                 for (var _b = 0, add_1 = add; _b < add_1.length; _b++) {
                     var e = add_1[_b];
-                    Handdle.insert(app_1.App.vars[startPoint].realDom, app_1.App.vars[e.data.loc], e.data.loc, e.lastDom);
+                    Handdle.insert(Compare.nowData[startPoint].realDom, e.data.loc, e.data.loc, e.lastDom);
                     delChildKey(Compare.lastData, e.data.loc);
                 }
             }
             // first time
             else {
                 Compare.nowData[startPoint].keys.map(function (e) {
-                    Handdle.add(app_1.App.vars[startPoint].realDom, app_1.App.vars[e.loc], e.loc);
-                    delChildKey(Compare.lastData, e.loc);
+                    Handdle.add(Compare.nowData[startPoint].realDom, e.loc, e.loc);
                 });
             }
         }
@@ -205,23 +206,21 @@ var Compare;
         else {
             for (var _c = 0, _d = Compare.nowData[startPoint].keys; _c < _d.length; _c++) {
                 var e = _d[_c];
-                var lastS = Compare.lastData[e.loc];
-                var nowS = app_1.App.vars[e.loc];
-                if (nowS === undefined && lastS === undefined)
+                if (Compare.nowData[e.loc] === undefined && Compare.lastData[e.loc] === undefined)
                     throw new Error("Error!");
-                if (lastS === undefined)
-                    Handdle.add(app_1.App.vars[startPoint].realDom, nowS, e.loc);
-                else if (nowS === undefined)
-                    Handdle.del(lastS.realDom);
-                else if (lastS.value.tag !== nowS.value.tag) {
-                    Handdle.change(app_1.App.vars[startPoint].realDom, lastS.realDom, nowS, e.loc);
+                if (Compare.lastData[e.loc] === undefined)
+                    Handdle.add(Compare.nowData[startPoint].realDom, e.loc, e.loc);
+                else if (Compare.nowData[e.loc] === undefined)
+                    Handdle.del(Compare.lastData[e.loc].realDom);
+                else if (Compare.lastData[e.loc].tag !== Compare.nowData[e.loc].tag) {
+                    Handdle.change(Compare.nowData[startPoint].realDom, Compare.lastData[e.loc].realDom, Compare.nowData[e.loc], e.loc);
                     delChildKey(Compare.lastData, e.loc);
                 }
                 else
-                    Handdle.changeState(app_1.App.vars[e.loc].realDom, lastS.value.myClass.states, nowS.value.myClass.states);
+                    Handdle.changeState(Compare.nowData[e.loc].realDom, Compare.lastData[e.loc].states, Compare.nowData[e.loc].states);
             }
         }
         // repeat
-        app_1.App.vars[startPoint].keys.map(function (index) { return Compare.render(index.loc); });
+        Compare.nowData[startPoint].keys.map(function (index) { return Compare.render(index.loc); });
     };
 })(Compare = exports.Compare || (exports.Compare = {}));

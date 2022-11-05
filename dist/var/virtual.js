@@ -12,4 +12,14 @@ var Virtual;
         return Dom;
     }());
     Virtual.Dom = Dom;
+    var DomState = /** @class */ (function () {
+        function DomState(tag_, states_, keys_, realDom_) {
+            this.tag = tag_;
+            this.states = states_;
+            this.keys = keys_;
+            this.realDom = realDom_;
+        }
+        return DomState;
+    }());
+    Virtual.DomState = DomState;
 })(Virtual = exports.Virtual || (exports.Virtual = {}));
